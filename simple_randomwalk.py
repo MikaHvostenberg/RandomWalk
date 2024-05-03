@@ -21,5 +21,6 @@ for i in range(0,frames,1):
     y_prev=y_curent
     if ((x_current-x_start)**2+(y_curent-y_start)**2>1000):
         break
+    
 plt.plot(distance_register)
 plt.show()
