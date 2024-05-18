@@ -13,7 +13,7 @@ if __name__ == "__main__":
         # coeffs.append(2/(n*math.pi)*(6-6*math.sin(n*math.pi/6)))
         
         # initial condition LAMBDA(x) = -6*12^2 (x-1/12)^2 + 6 
-        I_lam = -144/(n*math.pi)**3*(-12+12*math.cos(n*math.pi/6)+n*math.pi*math.sin(n*math.pi/6))
+        I_lam = -24/(n*math.pi)**3*(-12+12*math.cos(n*math.pi/6)+n*math.pi*math.sin(n*math.pi/6))
         I_s = 1/(n*math.pi)
         coeffs.append(2*(I_lam - I_s))
     
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     xrange = np.linspace(0,1,1000)
     param_D = 0.005
 
-    color = plt.cm.rainbow(np.linspace(0,1,len(timetotal)))
+    color = plt.cm.rainbow(np.linspace(0,1,len(timetotal))[::-1])
 
     fig, ax = plt.subplots(1,1,constrained_layout=True)
     # ax.set_ylim(bottom=0,top=6)
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     ax.set_ylabel("$T(x,t)$")
 
 
-    for j,t in enumerate(timetotal):
+    for j,t in enumerate(timetotal[::-1]):
         solvals = 1-xrange
         for i, cf in enumerate(coeffs):
             solvals += cf*np.sin((i+1)*np.pi*xrange)*np.exp(-(i+1)**2*np.pi**2*param_D*t)
