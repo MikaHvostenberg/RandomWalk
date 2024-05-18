@@ -9,11 +9,15 @@ if __name__ == "__main__":
 
     for i in range(numterms):
         n = i+1
-        coeffs.append(2/(n*math.pi)*(5-6*math.sin(n*math.pi/6)+math.cos(n*math.pi)))
-
+        # coeffs.append(2/(n*math.pi)*(5-6*math.sin(n*math.pi/6)+math.cos(n*math.pi)))
+        # coeffs.append(2/(n*math.pi)*(6-6*math.sin(n*math.pi/6)))
+        
+        # initial condition S(x) = -6*12^2 (x-1/12)^2 + 6 
+        coeffs.append(-288/(n*math.pi)**3*(-12+12*math.cos(n*math.pi/6)+n*math.pi*math.sin(n*math.pi/6)))
+    
     timerangeone = np.linspace(0,2,40) #small list! not the axis
-    timerangetwo = np.linspace(2,10,40)
-    timerangethree = np.linspace(10,20,40)
+    timerangetwo = np.linspace(2,5,40)
+    timerangethree = np.linspace(5,20,80)
     timerangefour = np.linspace(20,100,40)
     timetotal = np.concatenate((timerangeone,timerangetwo,timerangethree,timerangefour),axis=None)
 
@@ -23,7 +27,7 @@ if __name__ == "__main__":
     color = plt.cm.rainbow(np.linspace(0,1,len(timetotal)))
 
     fig, ax = plt.subplots(1,1,constrained_layout=True)
-    ax.set_ylim(bottom=0,top=6)
+    # ax.set_ylim(bottom=0,top=6)
     ax.set_xticks([0,1/6,2/6,3/6,4/6,5/6,1],labels=["0","1/6","2/6","3/6","4/6","5/6","1"])
     ax.set_title("$T(x,t)$ for $0<t<100$, $D=$" + f"{param_D}, expanded to {numterms} terms")    
     ax.set_xlabel("$x$")
@@ -37,5 +41,5 @@ if __name__ == "__main__":
 
         ax.plot(xrange,solvals,c=color[j])
     
-    fig.savefig("fourierplots.pdf")
+    fig.savefig("Tplot-parabolic.pdf")
     plt.show()
