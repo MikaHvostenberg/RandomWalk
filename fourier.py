@@ -55,5 +55,5 @@ if __name__ == "__main__":
 
         ax.plot(xrange,solvals,c=color[j])
     
-    fig.savefig("initialplot-parabolic.pdf")
+    fig.savefig("initialplot-constant.pdf")
     plt.show()
