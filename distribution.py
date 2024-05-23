@@ -11,7 +11,9 @@ def main(
         display:int,
         param_D:float=0.005,
         numterms:int=200,
-        nbins:int=6):
+        nbins:int=6,
+        norm_first:bool=True,
+        norm_last:bool=True):
     """
     Main part of the program. Choose which plot to make.
     """
@@ -29,7 +31,9 @@ def main(
                 term += 1/(n**2*pi**2) * (1+11*math.cos(n*pi/6)) * math.sin(n*pi/12*(2*k-1)) * math.sin(n*pi/12) * math.exp(-n**2 * pi**2 * param_D * t)
             
             qvals[j,i] -= (24/11)*term
-            qvals[j,i] = qvals[j,i]/qvals[j,0] # fix the first bin to be 1
+            
+            if norm_first:
+                qvals[j,i] = qvals[j,i]/qvals[j,0] # fix the first bin to be 1
 
         print(f"Computed bin {k}")
     # print(qvals)
@@ -67,7 +71,7 @@ def main(
             ax2.plot(timetotal,qvals[:,i],label=f"Bin $k={i+1}$")
             # ax2.set_title(f"Bin $k={i+1}$")
 
-        ax2.legend(loc="upper left")
+        ax2.legend(loc="upper right")
         fig2.supxlabel("$t$")
         fig2.supylabel("$Q_k(t)$")
         fig2.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
@@ -82,7 +86,7 @@ def main(
         for i,qk in enumerate(qvals[::-1]):
             ax3.stairs(qk,color=color[i])
 
-        fig3.supxlabel("$Bin $k=1,...,6$")
+        fig3.supxlabel("Bin $k=1,...,6$")
         fig3.supylabel("$Q_k(t)$")
         fig3.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
         
@@ -111,7 +115,7 @@ if __name__ == "__main__":
     # timetotal = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,24,48,96,192,384])
     timetotal = np.linspace(0,100,1000)
     
-    main(timetotal,display=3,param_D=0.005,numterms=200,nbins=6)
+    main(timetotal,display=2,param_D=0.005,numterms=200,nbins=6,norm_first=False)
 
     plt.show()
     exit()
