@@ -66,32 +66,57 @@ def main(
         return None
 
     if display == 2:
-        fig2, ax2 = plt.subplots(1,1,constrained_layout=True, sharex=True,sharey=True)
+        fig, ax = plt.subplots(1,1,constrained_layout=True, sharex=True,sharey=True)
         for i in range(nbins):
-            ax2.plot(timetotal,qvals[:,i],label=f"Bin $k={i+1}$")
-            # ax2.set_title(f"Bin $k={i+1}$")
+            ax.plot(timetotal,qvals[:,i],label=f"Bin $k={i+1}$")
+            # ax.set_title(f"Bin $k={i+1}$")
 
-        ax2.legend(loc="upper right")
-        fig2.supxlabel("$t$")
-        fig2.supylabel("$Q_k(t)$")
-        fig2.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
+        ax.legend(loc="upper right")
+        fig.supxlabel("$t$")
+        fig.supylabel("$Q_k(t)$")
+        fig.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
         
 
-        fig2.savefig("qvals-per-bin-plot.pdf")
+        fig.savefig("qvals-per-bin-plot.pdf")
 
         return None
 
     if display == 3:
-        fig3, ax3 = plt.subplots(1,1,constrained_layout=True, sharex=True,sharey=True)
+        fig, ax = plt.subplots(1,1,constrained_layout=True, sharex=True,sharey=True)
         for i,qk in enumerate(qvals[::-1]):
-            ax3.stairs(qk,color=color[i])
+            ax.stairs(qk,color=color[i])
 
-        fig3.supxlabel("Bin $k=1,...,6$")
-        fig3.supylabel("$Q_k(t)$")
-        fig3.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
+        fig.supxlabel("Bin $k=1,...,6$")
+        fig.supylabel("$Q_k(t)$")
+        fig.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
         
 
-        fig3.savefig("qvals-oneplot.pdf")
+        fig.savefig("qvals-oneplot.pdf")
+
+        return None
+    
+    if display == 4:
+        # tpickedvals = [1,5,10,20,40,100]
+
+        # # finding the corresp. indices in the qvals array
+        # tindices = []
+        # for tval in tpickedvals:
+        #     tindices.append(np.where(timetotal==tval)[0][0])
+        # tindices = np.array(tindices)
+
+        # qslice = np.empty_like(tindices)
+        # for i, tind in enumerate(tindices):
+        #     qslice[i] = qvals[tind][5]
+
+        time_fixed = 100
+
+        fig, ax = plt.subplots(1,1,constrained_layout=True, sharex=True,sharey=True)
+        ax.plot(timetotal*param_D/time_fixed, qvals[:,-1])
+        
+        fig.supylabel(f"$Q_6(t={time_fixed})$")
+        fig.supxlabel("$D$")
+        fig.suptitle(f"Flux depending on $D$ at a fixed $t={time_fixed}$")
+        fig.savefig("fluxplot.pdf")
 
         return None
 
@@ -113,9 +138,11 @@ if __name__ == "__main__":
     #     axis=None
     # )
     # timetotal = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,24,48,96,192,384])
-    timetotal = np.linspace(0,100,1000)
     
-    main(timetotal,display=2,param_D=0.005,numterms=200,nbins=6,norm_first=False)
+    # make sure the integer t values are hit!
+    timetotal = np.linspace(0,100,1001)
+    
+    main(timetotal,display=4,param_D=0.005,numterms=200,nbins=6,norm_first=False)
 
     plt.show()
     exit()
