@@ -13,7 +13,8 @@ def main(
         numterms:int=200,
         nbins:int=6,
         norm_first:bool=True,
-        norm_last:bool=True):
+        norm_last:bool=True,
+        time_fixed:float=100):
     """
     Main part of the program. Choose which plot to make.
     """
@@ -96,20 +97,6 @@ def main(
         return None
     
     if display == 4:
-        # tpickedvals = [1,5,10,20,40,100]
-
-        # # finding the corresp. indices in the qvals array
-        # tindices = []
-        # for tval in tpickedvals:
-        #     tindices.append(np.where(timetotal==tval)[0][0])
-        # tindices = np.array(tindices)
-
-        # qslice = np.empty_like(tindices)
-        # for i, tind in enumerate(tindices):
-        #     qslice[i] = qvals[tind][5]
-
-        time_fixed = 100
-
         fig, ax = plt.subplots(1,1,constrained_layout=True, sharex=True,sharey=True)
         ax.plot(timetotal*param_D/time_fixed, qvals[:,-1])
         
@@ -139,10 +126,10 @@ if __name__ == "__main__":
     # )
     # timetotal = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,24,48,96,192,384])
     
-    # make sure the integer t values are hit!
+    # make sure the t values is hit!
     timetotal = np.linspace(0,100,1001)
     
-    main(timetotal,display=4,param_D=0.005,numterms=200,nbins=6,norm_first=False)
+    main(timetotal,display=4,param_D=0.005,numterms=200,nbins=6,norm_first=True,time_fixed=100)
 
     plt.show()
     exit()
