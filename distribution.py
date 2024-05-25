@@ -14,7 +14,8 @@ def main(
         nbins:int=6,
         norm_first:bool=True,
         norm_last:bool=True,
-        time_fixed:float=100):
+        time_fixed:float=100
+        ):
     """
     Main part of the program. Choose which plot to make.
     """
