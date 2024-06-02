@@ -91,12 +91,25 @@ def plot_comparison(
     fig.supxlabel("Bin")
     fig.supylabel("Normalised amount, arb. units")
     fig.suptitle(f"Experimental and theoretical $Q_k$ values with $D={dval} \\pm {derr}$ at $I={ampl}$ A")
-    fig.savefig(savetitle + ".pdf")
+    fig.savefig("plots/" + savetitle + ".pdf")
 
     return None
 
 
+def rnd_fl(num):
+    """
+    Round the float to the first non-zero digit.
+    """
+    if not num:
+        return num, 0
+    current_num = abs(num) * 10
+    round_value = 1
 
+    while not (current_num//1):
+        current_num *= 10
+        round_value +=1
+
+    return round(num, round_value), round_value
 
 
 
@@ -144,14 +157,17 @@ if __name__ == "__main__":
 
     # compute fitting
     tvals_5 = np.tile(tvallist[0],6)
-    params5, pcovs5 = sp.optimize.curve_fit(function_to_fit, tvals_5, qvals_5, p0=[0.00008], bounds=[0.00005,0.001])
+    params5, pcovs5 = sp.optimize.curve_fit(function_to_fit, tvals_5, qvals_5, p0=[0.0003], bounds=[0.0001,0.0005])
     perr5 = np.sqrt(np.diag(pcovs5))[0]
     
     print(f"D={params5} +- {perr5} Hz length")
     
     qtheor5 = compute_qvals(tvallist[0],param_D=params5[0])
-    
-    plot_comparison(tvallist[0], qvals_5_forplotting, qtheor5, 0.5, params5[0], perr5, "ampl0.5")
+
+
+    rnd_perr5, dig_p5 = rnd_fl(perr5) 
+    rnd_p5 = round(params5[0], dig_p5)
+    plot_comparison(tvallist[0], qvals_5_forplotting, qtheor5, 0.5, rnd_p5, rnd_perr5, "ampl0.5")
 
 
 
