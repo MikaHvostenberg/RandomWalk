@@ -6,21 +6,17 @@ import math
 # computation of Q_k(t)
 
 
-def main(
+def compute_qvals(
         timetotal:np.ndarray,
-        display:int,
         param_D:float=0.005,
         numterms:int=200,
         nbins:int=6,
-        norm_first:bool=True,
-        norm_last:bool=True,
-        time_fixed:float=100
-        ):
+        norm_first:bool=True
+    ):
     """
-    Main part of the program. Choose which plot to make.
+    Computes the expected Q values over numbins boxes.
     """
     pi = math.pi
-
     # iterate over each of the bins and then for each time value compute the series
     qvals = np.zeros((len(timetotal), nbins))
     for i,k in enumerate(range(1,nbins+1)):
@@ -38,9 +34,25 @@ def main(
                 qvals[j,i] = qvals[j,i]/qvals[j,0] # fix the first bin to be 1
 
         print(f"Computed bin {k}")
-    # print(qvals)
-    # exit()
 
+    return qvals
+
+
+def main(
+        timetotal:np.ndarray,
+        display:int,
+        param_D:float=0.005,
+        numterms:int=200,
+        nbins:int=6,
+        norm_first:bool=True,
+        time_fixed:float=100
+    ):
+    """
+    Main part of the program. Choose which plot to make.
+    """
+    pi = math.pi
+
+    qvals = compute_qvals(timetotal, param_D, numterms, nbins, norm_first)
     color = plt.cm.rainbow(np.linspace(0,1,len(timetotal))[::-1])
 
     if display == 0:
