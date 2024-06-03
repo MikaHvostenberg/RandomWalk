@@ -230,24 +230,36 @@ if __name__ == "__main__":
         qtheor = compute_qvals(tvals, param_D=dpar)
 
         plot_comparison(tvals, qvals_forplotting, qtheor, ampls[i], rnd_d, rnd_perr, "")
-
+    
+    length_unit = 20 # centimeters
     arr_ampls = np.array(ampls)
-    dfitted = np.array([0.00005, 0.00015, 0.00016, 0.0007, 0.0002, 0.0004, 0.0005])
-    dfittederr = np.array([0.00005, 0.00002, 0.00003, 0.0002, 0.00006, 0.0001, 0.0001])
+    dfitted = np.array([0.00005, 0.00015, 0.00016, 0.0007, 0.0002, 0.0004, 0.0005])*length_unit**2 # Hz cm^2
+    dfittederr = np.array([0.00005, 0.00002, 0.00003, 0.0002, 0.00006, 0.0001, 0.0001])*length_unit**2 # Hz cm^2
     
     fig, ax = plt.subplots(1,1, constrained_layout=True, sharex=True, sharey=True)
 
     eparams, epcovs = sp.optimize.curve_fit(funcexp, arr_ampls, dfitted, sigma=dfittederr)
+    eerrs = np.sqrt(np.diag(epcovs))
+    rnd_erra, dig_pa = rnd_fl(eerrs[0]) 
+    rnd_errc, dig_pc = rnd_fl(eerrs[1]) 
+    rnd_pa = round(eparams[0], dig_pa)
+    rnd_pc = round(eparams[1], dig_pc)
+
+
     xvals = np.linspace(np.min(arr_ampls), np.max(arr_ampls), 1000)
     yvals = funcexp(xvals, eparams[0], eparams[1])
-    ax.plot(xvals, yvals, c='b', label="$D=ae^{cI}$, where " + f"$a={rnd_fl(eparams[0])[0]}$, $c={rnd_fl(eparams[1])[0]}$")
+    yerror = funcexp(xvals, eerrs[0], eerrs[1])
+    yminus = funcexp(xvals, eparams[0]-eerrs[0], eparams[1]-eerrs[1])
+    yplus = funcexp(xvals, eparams[0]+eerrs[0], eparams[1]+eerrs[1])
 
+    ax.plot(xvals, yvals, c="#336ea0", label="$D=ae^{cI}$, where " + f"$a={rnd_pa}\\pm {rnd_erra}$, $c={rnd_pc} \\pm {rnd_errc}$")
+    ax.fill_between(xvals, yminus, yplus, alpha=0.5, facecolor="#dde9f4", edgecolor="#74a7d2")
 
     ax.errorbar(arr_ampls, dfitted, yerr=dfittederr, xerr=0.01*np.ones_like(arr_ampls), ecolor="black", color='r', linestyle='', marker='.')
-    # ax.set_yscale("log")
+    ax.set_yscale("log")
     ax.legend(loc="lower right")
     fig.supxlabel("$I$, A")
-    fig.supylabel("$D$, Hz * length unit")
+    fig.supylabel("$D$, Hz cm$^2$")
     fig.savefig("plots/diplot.pdf")
 
     exit()
