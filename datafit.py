@@ -3,6 +3,7 @@ import math
 import scipy as sp 
 import pandas as pd 
 import matplotlib.pyplot as plt
+from typing import Callable
 from distribution import compute_qvals
 
 def compute_qk(
@@ -86,12 +87,12 @@ def plot_comparison(
         axis.stairs(qexper, color="r", label="Exp.")
         axis.stairs(qtheor, color="b", label="Thr.")
         axis.legend(loc="upper right")
-        axis.set_title(f"$t={tvals[i]}$")
+        axis.set_title(f"$t={tvals[i]}$ s")
 
     fig.supxlabel("Bin")
     fig.supylabel("Normalised amount, arb. units")
-    fig.suptitle(f"Experimental and theoretical $Q_k$ values with $D={dval} \\pm {derr}$ at $I={ampl}$ A")
-    fig.savefig("plots/" + savetitle + ".pdf")
+    fig.suptitle(f"Experimental and theoretical $Q_k$ values with $D={dval} \\pm {derr}$ Hz length at $I={ampl}$ A")
+    fig.savefig("plots/" + f"ampl{ampl}" + savetitle + ".pdf")
 
     return None
 
@@ -112,6 +113,59 @@ def rnd_fl(num):
     return round(num, round_value), round_value
 
 
+def make_normal_qvals(data:np.ndarray):
+    """
+    Makes the normalised concatenated qvals for fitting
+    and qvals for plotting.
+    """
+    # make normalised q values for amplitude
+    normalisation = data[:,2]
+    qvals = np.concatenate(
+        [
+        data[:,2]/normalisation, 
+        data[:,3]/normalisation, 
+        data[:,4]/normalisation, 
+        data[:,5]/normalisation, 
+        data[:,6]/normalisation, 
+        data[:,8]/normalisation #flux 8, zero 7
+        ]
+    ) 
+    
+    # make nonconcatenated q values as for plotting
+    databefore = data[:, [2,3,4,5,6,8]]
+    qvals_forplotting = databefore/np.transpose(np.tile(normalisation, (6,1)))
+
+    return qvals, qvals_forplotting
+
+
+
+def compute_fit(
+        funct:Callable, 
+        tvals:np.ndarray, 
+        qvalsexp:np.ndarray, 
+        p0:float=0.0003, 
+        bounds:list[float]=[0.0001,0.0005],
+        compfitname:str=""
+        ) -> tuple[float, float, float, float]:
+
+    # compute fitting
+    tvals_concat = np.tile(tvals,6)
+    params, pcovs = sp.optimize.curve_fit(funct, tvals_concat, qvalsexp, p0=p0, bounds=bounds)
+    perr = np.sqrt(np.diag(pcovs))[0]
+    dparam = params[0]
+    
+    print(f"Executing compute_fit {compfitname}")
+    print(f"D={params} +- {perr} Hz length")
+    
+    rnd_perr, dig_p = rnd_fl(perr) 
+    rnd_p = round(params[0], dig_p)
+
+    return dparam, perr, rnd_p, rnd_perr
+
+
+def funcexp(x, a, c):
+    return a*np.exp(c*x)
+
 
 if __name__ == "__main__":
     df = pd.read_csv("datafile.csv")
@@ -130,46 +184,72 @@ if __name__ == "__main__":
     
     tvallist = []
     datalist = [ampl5, ampl6, ampl7, ampl75, ampl8, ampl9, ampl98]
-
+    
     # make a list of all t values to try, seconds
     for i in range(len(datalist)): 
         tvallist.append(datalist[i][:,1])
-    print(tvallist)
+    # print(tvallist)
 
-    # make normalised q values for amplitude 0.5
-    normalisation_5 = datalist[0][:,9]
-    qvals_5 = np.concatenate(
-        [
-        datalist[0][:,9]/normalisation_5, 
-        datalist[0][:,3]/normalisation_5, 
-        datalist[0][:,4]/normalisation_5, 
-        datalist[0][:,5]/normalisation_5, 
-        datalist[0][:,6]/normalisation_5, 
-        datalist[0][:,8]/normalisation_5 #flux
-        ]
-    ) # normalise by the first bin
-    databefore = datalist[0][:, [9,3,4,5,6,8]]
-    print(np.transpose(np.tile(normalisation_5, (6,1))))
-    print(databefore)
-    qvals_5_forplotting = databefore/np.transpose(np.tile(normalisation_5, (6,1)))
-    print(qvals_5_forplotting)
-    print(qvals_5)
 
-    # compute fitting
-    tvals_5 = np.tile(tvallist[0],6)
-    params5, pcovs5 = sp.optimize.curve_fit(function_to_fit, tvals_5, qvals_5, p0=[0.0003], bounds=[0.0001,0.0005])
-    perr5 = np.sqrt(np.diag(pcovs5))[0]
+    # subtract the flux
+    for i in range(len(datalist)):
+        #dummy variables, keep the time and 0 columns the same
+        ti = datalist[i][:,1]
+        q60 = datalist[i][:,7]
+        qi = datalist[i] 
+        x = datalist[i][:,8][:, np.newaxis]
+        datalist[i] = np.abs(qi - x)
+        datalist[i][:,1] = ti
+        datalist[i][:,7] = q60
+        # print(datalist[i])
+
+
     
-    print(f"D={params5} +- {perr5} Hz length")
+    # execude code for each data
+    cont = [0,0,0,0,0,0,0] # select which to fit (1=fit, 0=skip)
+    ampls = [0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 0.98]
+    p0s = [0.0001,0.0003,0.0015,0.02,0.03,0.04,0.04]
+    boundvals = [
+        [0.00005, 0.0002],
+        [0.00015, 0.0015],
+        [0.0007, 1],
+        [0.0009, 1],
+        [0.0002, 1],
+        [0.0005, 1],
+        [0.0005, 1],
+    ]
+    for i in range(len(tvallist)):
+        if cont[i] == 0:
+            print(f"Skipping amplitude {ampls[i]}")
+            # plt.figure()
+            # plt.savefig(f"plots/ampl{ampls[i]}.pdf")
+            continue
+        tvals = tvallist[i]
+        qvals, qvals_forplotting = make_normal_qvals(datalist[i])
+        dpar, perr, rnd_d, rnd_perr = compute_fit(function_to_fit, tvals, qvals, p0=p0s[i], bounds=boundvals[i], compfitname=str(ampls[i]))
+        qtheor = compute_qvals(tvals, param_D=dpar)
+
+        plot_comparison(tvals, qvals_forplotting, qtheor, ampls[i], rnd_d, rnd_perr, "")
+
+    arr_ampls = np.array(ampls)
+    dfitted = np.array([0.00005, 0.00015, 0.00016, 0.0007, 0.0002, 0.0004, 0.0005])
+    dfittederr = np.array([0.00005, 0.00002, 0.00003, 0.0002, 0.00006, 0.0001, 0.0001])
     
-    qtheor5 = compute_qvals(tvallist[0],param_D=params5[0])
+    fig, ax = plt.subplots(1,1, constrained_layout=True, sharex=True, sharey=True)
+
+    eparams, epcovs = sp.optimize.curve_fit(funcexp, arr_ampls, dfitted, sigma=dfittederr)
+    xvals = np.linspace(np.min(arr_ampls), np.max(arr_ampls), 1000)
+    yvals = funcexp(xvals, eparams[0], eparams[1])
+    ax.plot(xvals, yvals, c='b', label="$D=ae^{cI}$, where " + f"$a={rnd_fl(eparams[0])[0]}$, $c={rnd_fl(eparams[1])[0]}$")
 
 
-    rnd_perr5, dig_p5 = rnd_fl(perr5) 
-    rnd_p5 = round(params5[0], dig_p5)
-    plot_comparison(tvallist[0], qvals_5_forplotting, qtheor5, 0.5, rnd_p5, rnd_perr5, "ampl0.5")
+    ax.errorbar(arr_ampls, dfitted, yerr=dfittederr, xerr=0.01*np.ones_like(arr_ampls), ecolor="black", color='r', linestyle='', marker='.')
+    # ax.set_yscale("log")
+    ax.legend(loc="lower right")
+    fig.supxlabel("$I$, A")
+    fig.supylabel("$D$, Hz * length unit")
+    fig.savefig("plots/diplot.pdf")
 
-
-
+    exit()
 
 
