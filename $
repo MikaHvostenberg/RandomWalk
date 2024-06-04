@@ -1,6 +1,5 @@
 import numpy as np 
 import math
-from pandas.core.generic import common
 import scipy as sp 
 import pandas as pd 
 import matplotlib.pyplot as plt
@@ -168,50 +167,9 @@ def funcexp(x, a, c):
     return a*np.exp(c*x)
 
 
-def round_to_error(f:float, ef:float) -> tuple[float, float]:
-    """
-    Given a number f and its error ef, returns the number and error
-    rounded to the first significant digit of the error.
-    """
-    
-    rnd_ef, dig_ef = rnd_fl(ef) 
-    rnd_f = round(f, dig_ef)
-    
-    return rnd_f, rnd_ef
-
-
-def xpdecomp(f:float):
-    """
-    Decomposes a number into a base 10 exponent and scalar.
-    Example 0.00056 -> 5.6, -4
-    """
-    fexp = int(math.floor(math.log10(abs(f)))) if f != 0 else 0
-    return f/10**fexp, fexp
-
-
-def num_decomp_error(f:float, ef:float) -> tuple[float, float, int]:
-    """
-    Given a number and its error, returns the number, error
-    and common exponent.
-    """
-    f_man, f_exp = xpdecomp(f)
-    ef_man, ef_exp = xpdecomp(ef)
-
-    if f_exp*ef_exp <= 0:
-        print(f"No valid exp decomposition for {f} and {ef}")
-        return f, ef, 0
-    
-    common_exp = max(f_exp, ef_exp) if f_exp<0 else min(f_exp, ef_exp)
-    rnd_f, rnd_ef = round_to_error(f/10**common_exp, ef/10**common_exp)
-
-    return rnd_f, rnd_ef, common_exp
-
-
-
-
 if __name__ == "__main__":
-    # initialising data
     df = pd.read_csv("datafile.csv")
+    # print(df)
 
     data = df.to_numpy()
     data = data[8:]
@@ -227,14 +185,15 @@ if __name__ == "__main__":
     tvallist = []
     datalist = [ampl5, ampl6, ampl7, ampl75, ampl8, ampl9, ampl98]
     
-
     # make a list of all t values to try, seconds
     for i in range(len(datalist)): 
         tvallist.append(datalist[i][:,1])
+    # print(tvallist)
 
 
     # subtract the flux
     for i in range(len(datalist)):
+        #dummy variables, keep the time and 0 columns the same
         ti = datalist[i][:,1]
         q60 = datalist[i][:,7]
         qi = datalist[i] 
@@ -242,68 +201,64 @@ if __name__ == "__main__":
         datalist[i] = np.abs(qi - x)
         datalist[i][:,1] = ti
         datalist[i][:,7] = q60
+        # print(datalist[i])
+
 
     
     # execude code for each data
-    cont = [1,1,1,1,1,1,1] # select which to fit (1=fit, 0=skip)
+    cont = [0,0,0,0,0,0,0] # select which to fit (1=fit, 0=skip)
     ampls = [0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 0.98]
     p0s = [0.0001,0.0003,0.0015,0.02,0.03,0.04,0.04]
     boundvals = [
         [0.00005, 0.0002],
-        [0.00015, 0.001],
-        [0.0003, 1],
-        [0.00055, 1],
+        [0.00015, 0.0015],
+        [0.0007, 1],
+        [0.0009, 1],
         [0.0002, 1],
-        [0.0004, 1],
+        [0.0005, 1],
         [0.0005, 1],
     ]
-    dfitted = []
-    dfittederr = []
     for i in range(len(tvallist)):
         if cont[i] == 0:
             print(f"Skipping amplitude {ampls[i]}")
+            # plt.figure()
+            # plt.savefig(f"plots/ampl{ampls[i]}.pdf")
             continue
         tvals = tvallist[i]
         qvals, qvals_forplotting = make_normal_qvals(datalist[i])
         dpar, perr, rnd_d, rnd_perr = compute_fit(function_to_fit, tvals, qvals, p0=p0s[i], bounds=boundvals[i], compfitname=str(ampls[i]))
         qtheor = compute_qvals(tvals, param_D=dpar)
-        dfitted.append(dpar)
-        dfittederr.append(perr)
-        
-        # toggle plotting (very time consuming)
-        # plot_comparison(tvals, qvals_forplotting, qtheor, ampls[i], rnd_d, rnd_perr, "")
+
+        plot_comparison(tvals, qvals_forplotting, qtheor, ampls[i], rnd_d, rnd_perr, "")
     
-
-    # begin making the final plot of D in terms of I
-    dfitted = np.array(dfitted)
-    dfittederr = np.array(dfittederr)
-
     length_unit = 20 # centimeters
     arr_ampls = np.array(ampls)
+    dfitted = np.array([0.00005, 0.00015, 0.00016, 0.0007, 0.0002, 0.0004, 0.0005])*length_unit**2 # Hz cm^2
+    dfittederr = np.array([0.00005, 0.00002, 0.00003, 0.0002, 0.00006, 0.0001, 0.0001])*length_unit**2 # Hz cm^2
     
     fig, ax = plt.subplots(1,1, constrained_layout=True, sharex=True, sharey=True)
 
-    eparams, epcovs = sp.optimize.curve_fit(lambda x,a,c: a*x+c, arr_ampls, dfitted, sigma=dfittederr)
+    eparams, epcovs = sp.optimize.curve_fit(funcexp, arr_ampls, dfitted, sigma=dfittederr)
     eerrs = np.sqrt(np.diag(epcovs))
+    rnd_erra, dig_pa = rnd_fl(eerrs[0]) 
+    rnd_errc, dig_pc = rnd_fl(eerrs[1]) 
+    rnd_pa = round(eparams[0], dig_pa)
+    rnd_pc = round(eparams[1], dig_pc)
 
-    rnd_pa, rnd_erra = round_to_error(eparams[0], eerrs[0])
-    rnd_pc, rnd_errc = round_to_error(eparams[1], eerrs[1])
-    
-    xvals = np.linspace(np.min(arr_ampls), 1, 1000)
-    yvals = xvals*eparams[0]+eparams[1]
-    yerror = np.sqrt((xvals*eerrs[0])**2 + eerrs[1]**2)
 
-    ax.plot(xvals, yvals, c="#336ea0", label="$D=aI+b$, where \n" + f"$a=({rnd_pa}\\pm {rnd_erra})$ Hz cm$^2$ "+ "A$^{-1}$" + f", \n$c=({rnd_pc} \\pm {rnd_errc})$ Hz cm$^2$")
+    xvals = np.linspace(np.min(arr_ampls), np.max(arr_ampls), 1000)
+    yvals = funcexp(xvals, eparams[0], eparams[1])
+    yerror = funcexp(xvals, eerrs[0], eerrs[1])
+
+    ax.plot(xvals, yvals, c="#336ea0", label="$D=ae^{cI}$, where " + f"$a={rnd_pa}\\pm {rnd_erra}$, $c={rnd_pc} \\pm {rnd_errc}$")
     ax.fill_between(xvals, yvals-yerror, yvals+yerror, alpha=0.5, facecolor="#dde9f4", edgecolor="#74a7d2")
 
     ax.errorbar(arr_ampls, dfitted, yerr=dfittederr, xerr=0.01*np.ones_like(arr_ampls), ecolor="black", color='r', linestyle='', marker='.')
-    # ax.set_yscale("log")
+    ax.set_yscale("log")
     ax.legend(loc="lower right")
     fig.supxlabel("$I$, A")
     fig.supylabel("$D$, Hz cm$^2$")
     fig.savefig("plots/diplot.pdf")
-
-    print("Created D/I plot")
 
     exit()
 
