@@ -1,6 +1,5 @@
 import numpy as np 
 import math
-from pandas.core.generic import common
 import scipy as sp 
 import pandas as pd 
 import matplotlib.pyplot as plt
@@ -266,7 +265,7 @@ if __name__ == "__main__":
         tvals = tvallist[i]
         qvals, qvals_forplotting = make_normal_qvals(datalist[i])
         dpar, perr, rnd_d, rnd_perr = compute_fit(function_to_fit, tvals, qvals, p0=p0s[i], bounds=boundvals[i], compfitname=str(ampls[i]))
-        qtheor = compute_qvals(tvals, param_D=dpar)
+        qtheor = compute_qvals(tvals, param_D=dpar, print_progress=False)
         dfitted.append(dpar)
         dfittederr.append(perr)
         
@@ -288,12 +287,20 @@ if __name__ == "__main__":
 
     rnd_pa, rnd_erra = round_to_error(eparams[0], eerrs[0])
     rnd_pc, rnd_errc = round_to_error(eparams[1], eerrs[1])
+
+    xd_pa, xd_erra, xd_expa = num_decomp_error(rnd_pa, rnd_erra)
+    xd_pc, xd_errc, xd_expc = num_decomp_error(rnd_pc, rnd_errc)
     
     xvals = np.linspace(np.min(arr_ampls), 1, 1000)
     yvals = xvals*eparams[0]+eparams[1]
     yerror = np.sqrt((xvals*eerrs[0])**2 + eerrs[1]**2)
 
-    ax.plot(xvals, yvals, c="#336ea0", label="$D=aI+b$, where \n" + f"$a=({rnd_pa}\\pm {rnd_erra})$ Hz cm$^2$ "+ "A$^{-1}$" + f", \n$c=({rnd_pc} \\pm {rnd_errc})$ Hz cm$^2$")
+    ax.plot(
+        xvals, yvals, c="#336ea0", 
+        label="$D=aI+b$, where \n" + 
+              "$a=(%g"%(xd_pa) + "\\pm %g"%(xd_erra) + ")\\times 10^{%g"%(xd_expa) + "}$ Hz cm$^2$ " + "A$^{-1}$, \n" + 
+             f"$c=(%g"%(xd_pc) + "\\pm %g"%(xd_errc) + ")\\times 10^{%g"%(xd_expc) + "}$ Hz cm$^2$"
+    )
     ax.fill_between(xvals, yvals-yerror, yvals+yerror, alpha=0.5, facecolor="#dde9f4", edgecolor="#74a7d2")
 
     ax.errorbar(arr_ampls, dfitted, yerr=dfittederr, xerr=0.01*np.ones_like(arr_ampls), ecolor="black", color='r', linestyle='', marker='.')

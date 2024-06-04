@@ -11,7 +11,8 @@ def compute_qvals(
         param_D:float=0.005,
         numterms:int=200,
         nbins:int=6,
-        norm_first:bool=True
+        norm_first:bool=True,
+        print_progress:bool=True
     ):
     """
     Computes the expected Q values over numbins boxes.
@@ -32,8 +33,9 @@ def compute_qvals(
             
             if norm_first:
                 qvals[j,i] = qvals[j,i]/qvals[j,0] # fix the first bin to be 1
-
-        print(f"Computed bin {k}")
+        
+        if print_progress:
+            print(f"Computed bin {k}")
 
     return qvals
 
