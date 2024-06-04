@@ -79,30 +79,34 @@ def plot_comparison(
         ampl:float, 
         dval:float, 
         derr:float, 
-        savetitle:str
+        savetitle:str,
+        ncols:int=5
     ):
     """
     Plots the experimental q values against the fitted q values.
     """
 
-    nrows = int(math.ceil(len(tvals)/3))
-    fig, ax = plt.subplots(nrows, 3, figsize=(10,19), constrained_layout=True, sharex=True, sharey=True)
+    nrows = int(math.ceil(len(tvals)/ncols))
+    fig, ax = plt.subplots(nrows, ncols, figsize=(8,1+(7/5)*nrows), constrained_layout=True, sharex=True, sharey=True)
 
     for i, axis in enumerate(ax.flatten()):
-        if i == len(tvals):
-            break
+        if i >= len(tvals):
+            axis.remove()
+            continue
         
         qexper = qexperlist[i]
         qtheor = qtheorlist[i]
 
         axis.stairs(qexper, color="r", label="Exp.")
         axis.stairs(qtheor, color="b", label="Thr.")
-        axis.legend(loc="upper right")
         axis.set_title(f"$t={tvals[i]}$ s")
+        axis.set_xticks([0,1,2,3,4,5,6])
+        axis.set_aspect(6)
 
+    # fig.legend(loc="lower right")
     fig.supxlabel("Bin")
     fig.supylabel("Normalised amount, arb. units")
-    fig.suptitle(f"Experimental and theoretical $Q_k$ values with $D={dval} \\pm {derr}$ Hz length at $I={ampl}$ A")
+    # fig.suptitle(f"Experimental and theoretical $Q_k$ values with $D={dval} \\pm {derr}$ Hz length at $I={ampl}$ A")
     fig.savefig("plots/" + f"ampl{ampl}" + savetitle + ".pdf")
 
     return None
@@ -166,7 +170,7 @@ def compute_fit(
     dparam = params[0]
     
     print(f"Executing compute_fit {compfitname}")
-    print(f"D={params} +- {perr} Hz length")
+    print(f"D={params} +- {perr} Hz length^2")
     
     rnd_perr, dig_p = rnd_fl(perr) 
     rnd_p = round(params[0], dig_p)
@@ -206,6 +210,8 @@ def num_decomp_error(f:float, ef:float) -> tuple[float, float, int]:
     Given a number and its error, returns the number, error
     and common exponent.
     """
+    f, ef = round_to_error(f, ef)
+
     f_man, f_exp = xpdecomp(f)
     ef_man, ef_exp = xpdecomp(ef)
 
@@ -282,8 +288,9 @@ if __name__ == "__main__":
         dfitted.append(dpar)
         dfittederr.append(perr)
         
+        
         # toggle plotting (very time consuming)
-        # plot_comparison(tvals, qvals_forplotting, qtheor, ampls[i], rnd_d, rnd_perr, "")
+        plot_comparison(tvals, qvals_forplotting, qtheor, ampls[i], rnd_d, rnd_perr, "")
     
 
     # begin making the final plot of D in terms of I
@@ -291,18 +298,22 @@ if __name__ == "__main__":
     dfittederr = np.array(dfittederr)
 
     length_unit = 20 # centimeters
+    dfitted *= length_unit**2
+    dfittederr *= length_unit**2
     arr_ampls = np.array(ampls)
+    
+    for i in range(len(dfitted)):
+        dr, drerr = round_to_error(dfitted[i], dfittederr[i])
+        print(f"I = {ampls[i]} A, D = {dr} +- {drerr} Hz cm^2")
+
     
     fig, ax = plt.subplots(1,1, constrained_layout=True, sharex=True, sharey=True)
 
     eparams, epcovs = sp.optimize.curve_fit(lambda x,a,c: a*x+c, arr_ampls, dfitted, sigma=dfittederr)
     eerrs = np.sqrt(np.diag(epcovs))
 
-    rnd_pa, rnd_erra = round_to_error(eparams[0], eerrs[0])
-    rnd_pc, rnd_errc = round_to_error(eparams[1], eerrs[1])
-
-    xd_pa, xd_erra, xd_expa = num_decomp_error(rnd_pa, rnd_erra)
-    xd_pc, xd_errc, xd_expc = num_decomp_error(rnd_pc, rnd_errc)
+    xd_pa, xd_erra, xd_expa = num_decomp_error(eparams[0], eerrs[0])
+    xd_pc, xd_errc, xd_expc = num_decomp_error(eparams[1], eerrs[1])
     
     xvals = np.linspace(np.min(arr_ampls), 1, 1000)
     yvals = xvals*eparams[0]+eparams[1]

@@ -52,8 +52,6 @@ def main(
     """
     Main part of the program. Choose which plot to make.
     """
-    pi = math.pi
-
     qvals = compute_qvals(timetotal, param_D, numterms, nbins, norm_first)
     color = plt.cm.rainbow(np.linspace(0,1,len(timetotal))[::-1])
 
@@ -77,7 +75,7 @@ def main(
         fig.supxlabel("Bins $k=1,...,6$")
         fig.supylabel("$Q_k(t)$")
         
-        fig.savefig("qvalsplot.pdf")
+        fig.savefig("plots/qvalsplot.pdf")
 
         return None
 
@@ -93,7 +91,7 @@ def main(
         fig.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
         
 
-        fig.savefig("qvals-per-bin-plot.pdf")
+        fig.savefig("plots/qvals-per-bin-plot.pdf")
 
         return None
 
@@ -107,7 +105,7 @@ def main(
         fig.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
         
 
-        fig.savefig("qvals-oneplot.pdf")
+        fig.savefig("plots/qvals-oneplot.pdf")
 
         return None
     
@@ -118,7 +116,7 @@ def main(
         fig.supylabel(f"$Q_6(t={time_fixed})$")
         fig.supxlabel("$D$")
         fig.suptitle(f"Flux depending on $D$ at a fixed $t={time_fixed}$")
-        fig.savefig("fluxplot.pdf")
+        fig.savefig("plots/fluxplot.pdf")
 
         return None
 
@@ -145,6 +143,4 @@ if __name__ == "__main__":
     timetotal = np.linspace(0,100,1001)
     
     main(timetotal,display=4,param_D=0.005,numterms=200,nbins=6,norm_first=True,time_fixed=100)
-
-    plt.show()
     exit()
