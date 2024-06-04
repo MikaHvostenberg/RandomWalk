@@ -6,6 +6,20 @@ import matplotlib.pyplot as plt
 from typing import Callable
 from distribution import compute_qvals
 
+
+def qk_term_formula(
+        timevalue:np.ndarray,
+        param_D:float,
+        bin_k:int,
+        n:int
+    ):
+    """
+    Computes the Q value term in box k for a fixed n.
+    """
+    pi = math.pi
+    return 1/(n**2*pi**2) * (1+11*math.cos(n*pi/6)) * math.sin(n*pi/12*(2*bin_k-1)) * math.sin(n*pi/12) * np.exp(-n**2 * pi**2 * param_D * timevalue)
+
+
 def compute_qk(
         timevalue:np.ndarray,
         param_D:float,
@@ -16,17 +30,14 @@ def compute_qk(
     """
     Computes the expected Q value in box k.
     """
-    pi = math.pi
+
     # iterate over each of the bins and then for each time value compute the series
-
     qvalue = 0
-
-    # bin index i and k in formula
     qvalue += (13-2*bin_k)/11
 
     term = 0
     for n in range(1,numterms+1):
-        term += 1/(n**2*pi**2) * (1+11*math.cos(n*pi/6)) * math.sin(n*pi/12*(2*bin_k-1)) * math.sin(n*pi/12) * np.exp(-n**2 * pi**2 * param_D * timevalue)
+        term += qk_term_formula(timevalue,param_D,bin_k,n) 
 
     qvalue -= (24/11)*term
     
@@ -35,7 +46,7 @@ def compute_qk(
         qfirst = 1
         term = 0
         for n in range(1,numterms+1):
-            term += 1/(n**2*pi**2) * (1+11*math.cos(n*pi/6)) * math.sin(n*pi/12*(2*bin_k-1)) * math.sin(n*pi/12) * np.exp(-n**2 * pi**2 * param_D * timevalue)
+            term += qk_term_formula(timevalue,param_D,bin_k,n)
 
         qfirst -= (24/11)*term
 
@@ -183,6 +194,8 @@ def xpdecomp(f:float):
     """
     Decomposes a number into a base 10 exponent and scalar.
     Example 0.00056 -> 5.6, -4
+
+    Credits: jpm (StackOverflow).
     """
     fexp = int(math.floor(math.log10(abs(f)))) if f != 0 else 0
     return f/10**fexp, fexp
@@ -210,7 +223,7 @@ def num_decomp_error(f:float, ef:float) -> tuple[float, float, int]:
 
 if __name__ == "__main__":
     # initialising data
-    df = pd.read_csv("datafile.csv")
+    df = pd.read_csv("data/datafile.csv")
 
     data = df.to_numpy()
     data = data[8:]
