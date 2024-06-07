@@ -140,5 +140,5 @@ if __name__ == "__main__":
         ax.plot(tvals, compute_qk(tvals,paramd,k),c=colors[k-1],linestyle="dotted")
     
     fig.savefig("plots/ballsinbins-steady-avg.pdf")
-    np.savetxt("counter.csv",counterarray,delimiter=',')
+    np.savetxt("datacounter.csv",counterarray,delimiter=',')
     exit()
