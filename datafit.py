@@ -323,7 +323,7 @@ if __name__ == "__main__":
         xvals, yvals, c="#336ea0", 
         label="$D=aI+b$, where \n" + 
               "$a=(%g"%(xd_pa) + "\\pm %g"%(xd_erra) + ")\\times 10^{%g"%(xd_expa) + "}$ Hz cm$^2$ " + "A$^{-1}$, \n" + 
-             f"$c=(%g"%(xd_pc) + "\\pm %g"%(xd_errc) + ")\\times 10^{%g"%(xd_expc) + "}$ Hz cm$^2$"
+             f"$b=(%g"%(xd_pc) + "\\pm %g"%(xd_errc) + ")\\times 10^{%g"%(xd_expc) + "}$ Hz cm$^2$"
     )
     ax.fill_between(xvals, yvals-yerror, yvals+yerror, alpha=0.5, facecolor="#dde9f4", edgecolor="#74a7d2")
 

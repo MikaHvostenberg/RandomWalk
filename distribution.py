@@ -82,13 +82,13 @@ def main(
     if display == 2:
         fig, ax = plt.subplots(1,1,constrained_layout=True, sharex=True,sharey=True)
         for i in range(nbins):
-            ax.plot(timetotal,qvals[:,i],label=f"Bin $k={i+1}$")
+            ax.plot(timetotal*param_D,qvals[:,i],label=f"{i+1}")
             # ax.set_title(f"Bin $k={i+1}$")
 
-        ax.legend(loc="upper right")
-        fig.supxlabel("$t$")
-        fig.supylabel("$Q_k(t)$")
-        fig.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
+        ax.legend(loc="upper right", title=f"Bin $k$")
+        fig.supxlabel("$Dt$, arb. units")
+        fig.supylabel(f"$Q_k(t)$, arb. units, expanded to {numterms} terms")
+        # fig.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
         
 
         fig.savefig("plots/qvals-per-bin-plot.pdf")
@@ -98,11 +98,15 @@ def main(
     if display == 3:
         fig, ax = plt.subplots(1,1,constrained_layout=True, sharex=True,sharey=True)
         for i,qk in enumerate(qvals[::-1]):
+            if i%100 == 0:
+                ax.stairs(qk,color=color[i], label=f"{round(timetotal[::-1][i]*param_D,2)}")
+                continue
             ax.stairs(qk,color=color[i])
-
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles[::-1], labels[::-1], loc="upper right", title="$Dt$, arb. units")
         fig.supxlabel("Bin $k=1,...,6$")
-        fig.supylabel("$Q_k(t)$")
-        fig.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
+        fig.supylabel(f"$Q_k(t)$, arb. units, expanded to {numterms} terms")
+        # fig.suptitle(f"The distribution of particles in bins w.r.to time, $D={param_D}$,\nexpanded to $n={numterms}$ terms")
         
 
         fig.savefig("plots/qvals-oneplot.pdf")
@@ -115,7 +119,7 @@ def main(
         
         fig.supylabel(f"$Q_6(t={time_fixed})$")
         fig.supxlabel("$D$")
-        fig.suptitle(f"Flux depending on $D$ at a fixed $t={time_fixed}$")
+        fig.suptitle(f"$t={time_fixed}$")
         fig.savefig("plots/fluxplot.pdf")
 
         return None
@@ -142,5 +146,5 @@ if __name__ == "__main__":
     # make sure the t values is hit!
     timetotal = np.linspace(0,100,1001)
     
-    main(timetotal,display=4,param_D=0.005,numterms=200,nbins=6,norm_first=True,time_fixed=100)
+    main(timetotal,display=2,param_D=0.005,numterms=200,nbins=6,norm_first=True,time_fixed=100)
     exit()
